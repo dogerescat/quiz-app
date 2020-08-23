@@ -1,11 +1,28 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>クイズアプリ</title>
-</head>
-<body>
-    
-</body>
+    <style>
+      .question {
+        border-top: solid 2px gray;
+        border-bottom: solid 2px gray;
+      }
+      ul {
+        list-style: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><p>ようこそ</p></h1>
+    <div id="container">
+      <div id="question">
+        <p class="question">以下のボタンをクリック</p>
+      </div>
+      <ul id="answers"></ul>
+      <button id="start">開始</button>
+    </div>
+    <script src="index.js"></script>
+  </body>
 </html>
