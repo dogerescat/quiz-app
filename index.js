@@ -1,6 +1,6 @@
 "use strict";
 {
-  class Main {
+  class QuizPageCreator {
     constructor() {
       this.h1 = document.querySelector("h1");
       this.questionElement = document.getElementById("question");
@@ -15,12 +15,12 @@
     }
     
     onClickButton() {
-      this.startButton.addEventListener("click", this.setFetchData.bind(this));
+      this.startButton.addEventListener("click", this.setApiHitter.bind(this));
     }
 
-    setFetchData() {
+    setApiHitter() {
       this.gettingTitle();
-      const data = new FetchData(
+      const data = new ApiHitter(
         this.questionElement,
         this.answersElement,
         this.gameState,
@@ -74,7 +74,7 @@
     }
   }
 
-  class FetchData {
+  class ApiHitter {
     constructor(question, answers, gameState, startButton, el) {
       this.questionElement = question;
       this.answersElement = answers;
@@ -112,13 +112,13 @@
             this.gameState
           );
           questionNumber.setTitle();
-          const createQuestion = new CreateQuestion(
+          const createQuestion = new QuestionCreator(
             this.gameState,
             this.questionElement
           );
           createQuestion.checkcChildNodes();
           createQuestion.makeQuestionElement();
-          const createAnswer = new CreateAnswer(
+          const createAnswer = new AnswersCreator(
             this.answersElement,
             this.gameState,
             this.h1,
@@ -130,7 +130,7 @@
     }
   }
 
-  class CreateQuestion {
+  class QuestionCreator {
     constructor(gameState, question) {
       this.quizzs = gameState.quizzs;
       this.index = gameState.index;
@@ -169,7 +169,7 @@
     }
   }
 
-  class CreateAnswer {
+  class AnswersCreator {
     constructor(answers, gameState, el, question) {
       this.gameState = gameState;
       this.quizzs = gameState.quizzs;
@@ -244,13 +244,13 @@
           this.gameState
         );
         questionNumber.setTitle();
-        const createQuestion = new CreateQuestion(
+        const createQuestion = new QuestionCreator(
           this.gameState,
           this.questionElement
         );
         createQuestion.checkcChildNodes();
         createQuestion.makeQuestionElement();
-        const createAnswer = new CreateAnswer(
+        const createAnswer = new AnswersCreator(
           this.answersElement,
           this.gameState,
           this.h1,
@@ -333,5 +333,5 @@
     }
   }
 
-  const main = new Main();
+  const main = new QuizPageCreator();
 }
