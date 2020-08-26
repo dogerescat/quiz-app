@@ -1,141 +1,337 @@
 "use strict";
 {
-  const h1 = document.querySelector("h1");
-  const questionElement = document.getElementById("question");
-  const answersElement = document.getElementById("answers");
-  const startButton = document.getElementById("start");
-  const gameState = {
-    quizzs: [],
-    index: 0,
-    successNum: 0,
-  };
-  let array = [];
-  const fetchQuizData = () => {
-    h1.removeChild(h1.firstChild);
-    questionElement.removeChild(questionElement.firstElementChild);
-
-    const title = document.createElement("p");
-    const message = document.createElement("p");
-    message.setAttribute("class", "question");
-
-    title.appendChild(document.createTextNode("取得中"));
-    message.appendChild(document.createTextNode("少々お待ちください"));
-
-    h1.appendChild(title);
-    questionElement.appendChild(message);
-
-    startButton.remove();
-
-    fetch("https://opentdb.com/api.php?amount=10")
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        }
-      })
-      .then((data) => {
-        gameState.quizzs = data.results;
-        setNextQuiz(gameState.quizzs);
-      });
-  };
-
-  const countAnswer = (e, answer) => {
-    if (e.currentTarget.innerHTML === answer) {
-      gameState.successNum++;
+  class Main {
+    constructor() {
+      this.h1 = document.querySelector("h1");
+      this.questionElement = document.getElementById("question");
+      this.answersElement = document.getElementById("answers");
+      this.startButton = document.getElementById("start");
+      this.gameState = {
+        quizzs: [],
+        index: 0,
+        successNum: 0,
+      };
+      this.onClickButton();
     }
-    gameState.index++;
-    setNextQuiz(gameState.quizzs);
-  };
-
-  const showResults = () => {
-    const resultsText = document.createElement("p");
-    resultsText.appendChild(
-      document.createTextNode(
-        "あなたの正答数は" + gameState.successNum + "です！"
-      )
-    );
-    h1.appendChild(resultsText);
-    const comment = document.createElement("p");
-    comment.setAttribute("class", "question");
-    comment.appendChild(
-      document.createTextNode("再チャレンジしたい場合は以下をクリック")
-    );
-    questionElement.appendChild(comment);
-    const homeButton = document.createElement("button");
-    homeButton.appendChild(document.createTextNode("ホームに戻る"));
-    homeButton.addEventListener("click", () => {
-      location.reload();
-    });
-    const container = document.getElementById("container");
-    container.appendChild(homeButton);
-  };
-
-  const shuffle = (answers) => {
-    for (let i = answers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = answers[i];
-      answers[i] = answers[j];
-      answers[j] = tmp;
+    
+    onClickButton() {
+      this.startButton.addEventListener("click", this.setFetchData.bind(this));
     }
-    return answers;
-  };
 
-  const setNextQuiz = (quizzs) => {
-    h1.removeChild(h1.firstChild);
-    questionElement.removeChild(questionElement.firstElementChild);
-    if (questionElement.hasChildNodes()) {
-      while (questionElement.firstChild) {
-        questionElement.removeChild(questionElement.firstChild);
+    setFetchData() {
+      this.gettingTitle();
+      const data = new FetchData(
+        this.questionElement,
+        this.answersElement,
+        this.gameState,
+        this.startButton,
+        this.h1
+      );
+      data.setMessage();
+      data.getData();
+    }
+
+    gettingTitle(){
+      const title = new Title(this.h1, "取得中");
+      title.setElement();
+
+    }
+  }
+  class Title {
+    constructor(el, message) {
+      this.h1 = el;
+      this.message = message;
+      this.delete();
+    }
+
+    setElement() {
+      this.title = document.createElement("p");
+      this.title.appendChild(document.createTextNode(this.message));
+      this.h1.appendChild(this.title);
+    }
+
+    delete() {
+      this.h1.removeChild(this.h1.firstChild);
+    }
+  }
+
+  class QuestionTitle extends Title {
+    constructor(el, message, gameState) {
+      super(el, message);
+      this.questionCount = gameState.index + 1;
+      this.questionNum = document.createElement("p");
+    }
+
+    setTitle() {
+      this.questionNum.appendChild(
+        document.createTextNode(this.message + this.questionCount)
+      );
+      this.h1.appendChild(this.questionNum);
+    }
+
+    delete() {
+      super.delete();
+    }
+  }
+
+  class FetchData {
+    constructor(question, answers, gameState, startButton, el) {
+      this.questionElement = question;
+      this.answersElement = answers;
+      this.gameState = gameState;
+      this.startButton = startButton;
+      this.h1 = el;
+      this.delete();
+    }
+
+    delete() {
+      this.questionElement.removeChild(this.questionElement.firstElementChild);
+      this.startButton.remove();
+    }
+
+    setMessage() {
+      this.message = document.createElement("p");
+      this.message.setAttribute("class", "question");
+      this.message.appendChild(document.createTextNode("少々お待ちください"));
+      this.questionElement.appendChild(this.message);
+    }
+
+    getData() {
+      fetch("https://opentdb.com/api.php?amount=10")
+        .then((res) => {
+          if (res.ok) {
+            return res.json();
+          }
+        })
+        .then((data) => {
+          this.gameState.quizzs = data.results;
+
+          const questionNumber = new QuestionTitle(
+            this.h1,
+            "問題",
+            this.gameState
+          );
+          questionNumber.setTitle();
+          const createQuestion = new CreateQuestion(
+            this.gameState,
+            this.questionElement
+          );
+          createQuestion.checkcChildNodes();
+          createQuestion.makeQuestionElement();
+          const createAnswer = new CreateAnswer(
+            this.answersElement,
+            this.gameState,
+            this.h1,
+            this.questionElement
+          );
+          createAnswer.checkcChildNodes();
+          createAnswer.makeAnswerElement();
+        });
+    }
+  }
+
+  class CreateQuestion {
+    constructor(gameState, question) {
+      this.quizzs = gameState.quizzs;
+      this.index = gameState.index;
+      this.questionElement = question;
+    }
+
+    checkcChildNodes() {
+      if (this.questionElement.hasChildNodes()) {
+        this.delete();
       }
     }
-    if (answersElement.hasChildNodes()) {
-      while (answersElement.firstChild) {
-        answersElement.removeChild(answersElement.firstChild);
+
+    delete() {
+      while (this.questionElement.firstChild) {
+        this.questionElement.removeChild(this.questionElement.firstChild);
       }
     }
-    if (array.length !== 0) {
-      array.length = 0;
+
+    makeQuestionElement() {
+      const genre = document.createElement("p");
+      const level = document.createElement("p");
+      const questionText = document.createElement("p");
+      questionText.setAttribute("class", "question");
+      genre.appendChild(
+        document.createTextNode("[ジャンル]" + this.quizzs[this.index].category)
+      );
+      level.appendChild(
+        document.createTextNode("[難易度]" + this.quizzs[this.index].difficulty)
+      );
+      questionText.appendChild(
+        document.createTextNode(this.quizzs[this.index].question)
+      );
+      this.questionElement.appendChild(genre);
+      this.questionElement.appendChild(level);
+      this.questionElement.appendChild(questionText);
     }
-    if (gameState.index === 10) {
-      showResults();
-      return;
+  }
+
+  class CreateAnswer {
+    constructor(answers, gameState, el, question) {
+      this.gameState = gameState;
+      this.quizzs = gameState.quizzs;
+      this.index = gameState.index;
+      this.successNum = gameState.successNum;
+      this.answersElement = answers;
+      this.correctAnswer = this.quizzs[this.index].correct_answer;
+      this.h1 = el;
+      this.questionElement = question;
+      this.array = [];
     }
 
-    const questionCount = gameState.index + 1;
-    const questionNum = document.createElement("p");
-    questionNum.appendChild(document.createTextNode("問題" + questionCount));
-    h1.appendChild(questionNum);
-    const genre = document.createElement("p");
-    const level = document.createElement("p");
-    const questionText = document.createElement("p");
-    questionText.setAttribute("class", "question");
+    checkcChildNodes() {
+      if (this.answersElement.hasChildNodes()) {
+        this.delete();
+      }
+      if (this.array.length !== 0) {
+        this.array.length = 0;
+      }
+    }
 
-    genre.appendChild(
-      document.createTextNode("[ジャンル]" + quizzs[gameState.index].category)
-    );
-    level.appendChild(
-      document.createTextNode("[難易度]" + quizzs[gameState.index].difficulty)
-    );
-    questionText.appendChild(
-      document.createTextNode(quizzs[gameState.index].question)
-    );
-    questionElement.appendChild(genre);
-    questionElement.appendChild(level);
-    questionElement.appendChild(questionText);
-    const correctAnswer = quizzs[gameState.index].correct_answer;
-    array.push(correctAnswer);
-    let answers = array.concat(quizzs[gameState.index].incorrect_answers);
-    answers = shuffle(answers);
+    delete() {
+      while (this.answersElement.firstChild) {
+        this.answersElement.removeChild(this.answersElement.firstChild);
+      }
+    }
 
-    answers.forEach((answer) => {
-      let choiceList = document.createElement("li");
-      let answersButton = document.createElement("button");
-      answersButton.appendChild(document.createTextNode(answer));
-      answersButton.addEventListener("click", (e) => {
-        countAnswer(e, correctAnswer);
+    makeAnswerElement() {
+      this.array.push(this.correctAnswer);
+      let answers = this.array.concat(
+        this.quizzs[this.index].incorrect_answers
+      );
+      answers = this.shuffle(answers);
+      this.createButton(answers);
+    }
+
+    shuffle(answers) {
+      for (let i = answers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = answers[i];
+        answers[i] = answers[j];
+        answers[j] = tmp;
+      }
+      return answers;
+    }
+
+    createButton(answers) {
+      answers.forEach((answer) => {
+        let choiceList = document.createElement("li");
+        let answersButton = document.createElement("button");
+        answersButton.appendChild(document.createTextNode(answer));
+        answersButton.addEventListener("click", (e) => {
+          this.setNextQuestion(e, this.correctAnswer);
+        });
+        choiceList.appendChild(answersButton);
+        this.answersElement.appendChild(choiceList);
       });
-      choiceList.appendChild(answersButton);
-      answersElement.appendChild(choiceList);
-    });
-  };
-  startButton.addEventListener("click", fetchQuizData);
+    }
+
+    setNextQuestion(e, answer) {
+      this.indexCount.call(main, e, answer);
+      if (main.gameState.index === 10) {
+        const resultPage = this.createResultPage();
+        resultPage.setResultMessage();
+        resultPage.setMessage();
+        resultPage.setHomeButton();
+        return;
+      } else {
+        const questionNumber = new QuestionTitle(
+          this.h1,
+          "問題",
+          this.gameState
+        );
+        questionNumber.setTitle();
+        const createQuestion = new CreateQuestion(
+          this.gameState,
+          this.questionElement
+        );
+        createQuestion.checkcChildNodes();
+        createQuestion.makeQuestionElement();
+        const createAnswer = new CreateAnswer(
+          this.answersElement,
+          this.gameState,
+          this.h1,
+          this.questionElement
+        );
+        createAnswer.checkcChildNodes();
+        createAnswer.makeAnswerElement();
+      }
+    }
+    
+    createResultPage() {
+      return new ResultPage(
+        this.successNum,
+        this.h1,
+        this.questionElement,
+        this.answersElement
+      );
+    }
+
+    indexCount(e, answer) {
+      if (e.currentTarget.innerHTML === answer) {
+        this.gameState.successNum++;
+      }
+      this.gameState.index++;
+    }
+  }
+
+  class ResultPage {
+    constructor(successNum, el, question, answers) {
+      this.resultsText = document.createElement("p");
+      this.homeButton = document.createElement("button");
+      this.successNum = successNum;
+      this.h1 = el;
+      this.questionElement = question;
+      this.answersElement = answers;
+      this.deleteTitle();
+      this.deleteQuestion();
+      this.deleteAnswerButton();
+    }
+
+    deleteTitle() {
+      this.h1.removeChild(this.h1.firstChild);
+    }
+
+    deleteQuestion() {
+      while (this.questionElement.firstChild) {
+        this.questionElement.removeChild(this.questionElement.firstChild);
+      }
+    }
+
+    deleteAnswerButton() {
+      while (this.answersElement.firstChild) {
+        this.answersElement.removeChild(this.answersElement.firstChild);
+      }
+    }
+
+    setResultMessage() {
+      this.resultsText.appendChild(
+        document.createTextNode("あなたの正答数は" + this.successNum + "です！")
+      );
+      this.h1.appendChild(this.resultsText);
+    }
+
+    setMessage() {
+      const comment = document.createElement("p");
+      comment.setAttribute("class", "question");
+      comment.appendChild(
+        document.createTextNode("再チャレンジしたい場合は以下をクリック")
+      );
+      this.questionElement.appendChild(comment);
+    }
+
+    setHomeButton() {
+      this.homeButton.appendChild(document.createTextNode("ホームに戻る"));
+      this.homeButton.addEventListener("click", () => {
+        location.reload();
+      });
+      const container = document.getElementById("container");
+      container.appendChild(this.homeButton);
+    }
+  }
+
+  const main = new Main();
 }
